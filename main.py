@@ -1,57 +1,47 @@
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-import openai
+from pydantic import BaseModel
+from openai import OpenAI
 import os
 
 app = FastAPI()
 
-# Abilita tutte le origini (per FlutterFlow)
+# Abilita CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Usa la variabile d'ambiente OPENAI_API_KEY
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+class FileRequest(BaseModel):
+    file_text: str
 
 @app.post("/validate")
-async def validate(
-    testo_documento: str = Form(...),
-    anno: str = Form(...),
-    causale: str = Form(...),
-    contanti: str = Form(...)
-):
-    prompt = f"""
-Stai validando una pratica di welfare per il cliente UNICREDIT, causale SCUOLA, anno {anno}.
-
-Il testo del documento fornito è il seguente:
-
-\"\"\"{testo_documento}\"\"\"
-
-Regole di validazione Unicredit – causale SCUOLA:
-- La ricevuta deve essere intestata al titolare o a un familiare a carico.
-- La spesa deve essere riferita all’anno {anno}, oppure ai mesi di ottobre, novembre o dicembre dell’anno precedente.
-- Se il pagamento è stato effettuato in contanti (contanti = {contanti}):
-  - Deve essere allegato un giustificativo valido (es. timbro, firma, ricevuta firmata).
-- Se non è in contanti, il pagamento deve essere tracciabile (bonifico, pagoPA, carta, ecc.).
-- Deve esserci una causale che dimostri la natura scolastica della spesa.
-
-Valuta il contenuto del documento rispetto a queste regole.
-
-Rispondi solo con il seguente JSON:
+async def validate_practice(request: FileRequest):
+    prompt = f"""Hai ricevuto questo testo OCR:\n{request.file_text}\n
+Controlla se rispetta le regole UNICREDIT SCUOLA.
+Rispondi SOLO con JSON. Se va bene:
 {{
-  "valido": true o false,
-  "messaggio": "VALIDATA" oppure "NON VALIDATA: <motivo>"
+  "esito": "VALIDA",
+  "motivazione": "ok"
 }}
-"""
+Se manca qualcosa, scrivi:
+{{
+  "esito": "NON VALIDA",
+  "motivazione": "spiega cosa manca"
+}}"""
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
         temperature=0
     )
 
-    risultato = response.choices[0].message.content.strip()
-    return eval(risultato)
+    return response.choices[0].message.content
+
