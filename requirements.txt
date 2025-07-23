@@ -2,3 +2,4 @@ fastapi
 aiofiles
 uvicorn
 openai
+python-multipart
