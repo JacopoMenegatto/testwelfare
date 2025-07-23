@@ -26,29 +26,46 @@ async def validate_practice(request: FileRequest):
 Hai ricevuto questo testo OCR:
 {request.file_text}
 
-Controlla se rispetta le regole UNICREDIT SCUOLA.
-Rispondi SOLO in JSON.
+Controlla se la pratica è valida secondo le regole UNICREDIT – CATEGORIA SCUOLA E ISTRUZIONE. Rispondi SOLO in JSON nei due formati previsti:
 
-Regole principali:
-1. La data della fattura e del pagamento devono essere nell’anno corretto.
-2. L’attestato di pagamento deve essere presente, leggibile e riferito alla fattura.
-3. Il pagamento deve essere tracciabile (bonifico, carta, ecc. – no contanti).
-4. L’importo richiesto nel portale (“Importo”) deve essere:
-   - ≥ 0,01 €
-   - ≤ importo effettivamente pagato (non della fattura).
-   - Anche se la fattura è più alta, conta solo quanto è stato pagato.
-
-Se tutto è ok:
+✅ Se la pratica è corretta:
 {{
   "esito": "VALIDA",
   "motivazione": "ok"
 }}
-Se manca qualcosa:
+
+❌ Se NON è valida:
 {{
   "esito": "NON VALIDA",
-  "motivazione": "spiega bene cosa manca"
+  "motivazione": "spiega cosa manca o cosa è sbagliato"
 }}
+
+🧠 Applica le seguenti regole:
+
+1. ❗ **Causale unica per pratica**: ogni pratica può contenere UNA sola causale (es. retta, mensa, gita). Anche se il pagamento contiene più voci, l'importo richiesto deve riferirsi a UNA sola causale.
+
+2. 💶 **Importo richiesto**: l'importo indicato nel portale può essere qualsiasi cifra compresa tra 0,01 € e l’importo effettivamente pagato (non l’importo della fattura). È normale che l’importo richiesto sia solo una parte.
+
+3. 🏷️ **Nome beneficiario**: deve essere specificato il nome del figlio beneficiario, leggibile nel giustificativo o nel pagamento. Il cognome può essere diverso da quello del titolare.
+
+4. 📅 **Anno corretto**: il pagamento o la prestazione devono riferirsi all’anno selezionato nel portale (es. 2025). Per Unicredit sono accettate anche spese di ottobre, novembre e dicembre dell’anno precedente.
+
+5. 💳 **Metodo di pagamento ammesso**:
+   - Bonifico, MAV, PagoPA, carta, bancomat, Satispay, estratto conto, ricevuta fiscale.
+   - Non sono ammessi contanti (salvo casi eccezionali con conferma esplicita).
+
+6. 🧾 **Giustificativi validi**: tra i giustificativi ammessi: ricevuta fiscale, fattura, ricevuta elettronica, MAV, dichiarazione della scuola con data, firma e intestazione.
+
+7. 🏫 **Intestatario del pagamento**: il pagamento può essere intestato al titolare del piano o al figlio beneficiario. È importante che almeno uno dei due sia chiaramente visibile.
+
+8. ⚠️ **Spese non rimborsabili**: non sono ammesse:
+   - Quota associativa, tesseramento, materiale scolastico, feste, picnic, foto di classe, assicurazioni.
+   - Multe, more, penalità.
+   - Voucher, bollo, commissioni.
+
+Verifica attentamente che la pratica rispetti TUTTI questi criteri. Se manca anche uno solo, classifica come NON VALIDA e spiega perché.
 """
+
 
 
     response = client.chat.completions.create(
