@@ -1,27 +1,28 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from openai import OpenAI
+import openai
 import os
 
 app = FastAPI()
 
-# Abilita CORS
+# Abilita tutte le origini (per FlutterFlow)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-class FileRequest(BaseModel):
-    file_text: str
+# Usa la variabile d'ambiente OPENAI_API_KEY
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.post("/validate")
-async def validate_practice(request: FileRequest):
+async def validate(
+    testo_documento: str = Form(...),
+    anno: str = Form(...),
+    causale: str = Form(...),
+    contanti: str = Form(...)
+):
     prompt = f"""
 Hai ricevuto questo testo OCR:
 {request.file_text}
@@ -64,15 +65,14 @@ Controlla se la pratica è valida secondo le regole UNICREDIT – CATEGORIA SCUO
    - Voucher, bollo, commissioni.
 
 Verifica attentamente che la pratica rispetti TUTTI questi criteri. Se manca anche uno solo, classifica come NON VALIDA e spiega perché.
-\"""
+"""
 
-    response = client.chat.completions.create(
+
+    response = openai.ChatCompletion.create(
         model="gpt-4",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
+        messages=[{"role": "user", "content": prompt}],
         temperature=0
     )
 
-    return response.choices[0].message.content
-"""
+    risultato = response.choices[0].message.content.strip()
+    return eval(risultato)
