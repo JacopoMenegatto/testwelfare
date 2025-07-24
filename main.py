@@ -68,10 +68,11 @@ Verifica attentamente che la pratica rispetti TUTTI questi criteri. Se manca anc
 
 
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
     model="gpt-4",
     messages=[
         {"role": "system", "content": "Sei un assistente che valida pratiche welfare"},
-        {"role": "user", "content": prompt}  # ✅ Devi passare il prompt costruito prima
-    ]
+        {"role": "user", "content": prompt}
+    ],
+    temperature=0
 )
