@@ -76,10 +76,3 @@ Verifica attentamente che la pratica rispetti TUTTI questi criteri. Se manca anc
 
     return response.choices[0].message.content
 """
-
-# Salvo il file aggiornato
-file_path = "/mnt/data/main_con_regole.py"
-with open(file_path, "w") as f:
-    f.write(main_con_regole)
-
-file_path
