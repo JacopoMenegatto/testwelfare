@@ -1,3 +1,7 @@
+# Ricreo il file main.py che includeva il prompt con le regole (quello che funzionava prima di stasera),
+# quando GPT rispondeva ma con output "sporco", non JSON strutturato ma con messaggi utili.
+
+main_con_regole = """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -22,10 +26,7 @@ class FileRequest(BaseModel):
 
 @app.post("/validate")
 async def validate_practice(request: FileRequest):
-    prompt = f"""
-Hai ricevuto questo testo OCR:
-{request.file_text}
-
+    prompt = f\"""Hai ricevuto questo testo OCR:\\n{request.file_text}\\n
 Controlla se la pratica è valida secondo le regole UNICREDIT – CATEGORIA SCUOLA E ISTRUZIONE. Rispondi SOLO in JSON nei due formati previsti:
 
 ✅ Se la pratica è corretta:
@@ -42,37 +43,28 @@ Controlla se la pratica è valida secondo le regole UNICREDIT – CATEGORIA SCUO
 
 🧠 Applica le seguenti regole:
 
-1. ❗ **Causale unica per pratica**: ogni pratica può contenere UNA sola causale (es. retta, mensa, gita). Anche se il pagamento contiene più voci, l'importo richiesto deve riferirsi a UNA sola causale.
-
-2. 💶 **Importo richiesto**: l'importo indicato nel portale può essere qualsiasi cifra compresa tra 0,01 € e l’importo effettivamente pagato (non l’importo della fattura). È normale che l’importo richiesto sia solo una parte.
-
-3. 🏷️ **Nome beneficiario**: deve essere specificato il nome del figlio beneficiario, leggibile nel giustificativo o nel pagamento. Il cognome può essere diverso da quello del titolare.
-
-4. 📅 **Anno corretto**: il pagamento o la prestazione devono riferirsi all’anno selezionato nel portale (es. 2025). Per Unicredit sono accettate anche spese di ottobre, novembre e dicembre dell’anno precedente.
-
-5. 💳 **Metodo di pagamento ammesso**:
-   - Bonifico, MAV, PagoPA, carta, bancomat, Satispay, estratto conto, ricevuta fiscale.
-   - Non sono ammessi contanti (salvo casi eccezionali con conferma esplicita).
-
-6. 🧾 **Giustificativi validi**: tra i giustificativi ammessi: ricevuta fiscale, fattura, ricevuta elettronica, MAV, dichiarazione della scuola con data, firma e intestazione.
-
-7. 🏫 **Intestatario del pagamento**: il pagamento può essere intestato al titolare del piano o al figlio beneficiario. È importante che almeno uno dei due sia chiaramente visibile.
-
-8. ⚠️ **Spese non rimborsabili**: non sono ammesse:
-   - Quota associativa, tesseramento, materiale scolastico, feste, picnic, foto di classe, assicurazioni.
-   - Multe, more, penalità.
-   - Voucher, bollo, commissioni.
-
-Verifica attentamente che la pratica rispetti TUTTI questi criteri. Se manca anche uno solo, classifica come NON VALIDA e spiega perché.
-"""
-
-
+1. Il nome e cognome del beneficiario deve essere specificato.
+2. Il codice fiscale deve essere corretto e di 16 caratteri.
+3. La causale deve contenere parole chiave come “iscrizione”, “gita scolastica”, “retta”, “libri”, ecc.
+4. La data deve essere compresa tra ottobre 2024 e dicembre 2025.
+5. L'importo deve essere > 0.
+6. Se manca qualcosa, spiegalo.
+\"""
 
     response = client.chat.completions.create(
-    model="gpt-4",
-    messages=[
-        {"role": "system", "content": "Sei un assistente che valida pratiche welfare"},
-        {"role": "user", "content": prompt}
-    ],
-    temperature=0
-)
+        model="gpt-4",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0
+    )
+
+    return response.choices[0].message.content
+"""
+
+# Salvo il file aggiornato
+file_path = "/mnt/data/main_con_regole.py"
+with open(file_path, "w") as f:
+    f.write(main_con_regole)
+
+file_path
