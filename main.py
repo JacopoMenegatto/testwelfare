@@ -68,12 +68,10 @@ Verifica attentamente che la pratica rispetti TUTTI questi criteri. Se manca anc
 
 
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0
-    )
-
-    return response.choices[0].message.content
+    response = openai.ChatCompletion.create(
+  model="gpt-4",
+  messages=[
+    {"role": "system", "content": "Sei un assistente che valida pratiche welfare"},
+    {"role": "user", "content": file_text}  # ← questo è il testo OCR
+  ]
+)
